@@ -17,9 +17,14 @@ set(BUILD_DIST false CACHE BOOL
 set(CXX_FLAGS "--std=c++17" CACHE STRING
     "Compile flags for Distribution and Tests.")
 
+# Add cross-compilation settings
 if (BUILD_DIST)
+    set(CMAKE_SYSTEM_NAME Linux)
+    set(CMAKE_SYSTEM_PROCESSOR arm)
+    set(CMAKE_C_COMPILER arm-linux-gnueabi-gcc-9)
+    set(CMAKE_CXX_COMPILER arm-linux-gnueabi-g++-9)
+
     include(SurrogateDist)
 else()
     include(SurrogateTest)
 endif()
-

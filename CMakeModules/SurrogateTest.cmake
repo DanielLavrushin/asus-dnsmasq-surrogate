@@ -17,7 +17,7 @@ set(GTEST_PFX "${CMAKE_BINARY_DIR}/third-party/googletest-pfx")
 
 ExternalProject_Add(googletest
    GIT_REPOSITORY    https://github.com/google/googletest.git
-   GIT_TAG           master
+   GIT_TAG           main
 	 PREFIX            "${GTEST_PFX}"
    SOURCE_DIR        "${GTEST_SRC}"
    BINARY_DIR        "${GTEST_BIN}"
