@@ -102,7 +102,9 @@ void DnsMasqConfig::AddHostsFile(const std::string& hosts_file) {
     if (!file.good()) return;
   }
   fs::path hosts_path = fs::current_path();
-  hosts_path.append(hosts_file);
+  
+  hosts_path /= hosts_file;
+  
   options_.emplace("addn-hosts", hosts_path);
 }
 

@@ -17,7 +17,7 @@ machine or download master), you're good to go.
 - install dependencies
 
   ```bash
-  sudo apt install cmake cmake-curses-gui gcc-arm-linux-gnueabi g++-arm-linux-gnueabi gcc-9-arm-linux-gnueabi g++-9-arm-linux-gnueabi
+  sudo apt install build-essential cmake cmake-curses-gui gcc-arm-linux-gnueabi g++-arm-linux-gnueabi gcc-9-arm-linux-gnueabi g++-9-arm-linux-gnueabi
   ```
 
 Simply invoke `cmake .` followed by `ccmake .`. `BUILD_DIST` controls whether
@@ -45,30 +45,30 @@ The last step will initialize SD card for you.
 ### Basic installation
 
 - Open
-    [`Releases`](https://github.com/tomasz-wiszkowski/asus-dnsmasq/releases)
-    tab here on Github and download archive for your router,
+  [`Releases`](https://github.com/tomasz-wiszkowski/asus-dnsmasq/releases)
+  tab here on Github and download archive for your router,
 - copy archive to your router (eg. using pendrive or `scp`)
 - extract contents of this archive on your router to /opt folder:
 
-    ```bash
-    cd /opt
-    tar -zxf /path/to/dnsmasq-surrogate-*.tgz .
-    ```
+  ```bash
+  cd /opt
+  tar -zxf /path/to/dnsmasq-surrogate-*.tgz .
+  ```
 
 - restart your router.
 
 ### Expert installation / building from sources
 
 - install armbian, debian or package manager on your router. Your package
-    manager must provide decently modern gcc or clang and basic build tools.
+  manager must provide decently modern gcc or clang and basic build tools.
 - execute `make dist` in the source folder. This will produce all artifacts
-    and package them to a tgz file.
+  and package them to a tgz file.
 - decompress the package to an `/opt` folder:
 
-    ```bash
-    cd /opt
-    tar -zxf /path/to/dnsmasq-surrogate-*.tgz .
-    ```
+  ```bash
+  cd /opt
+  tar -zxf /path/to/dnsmasq-surrogate-*.tgz .
+  ```
 
   - activate surrogate and restart dnsmasq:
 
@@ -83,7 +83,7 @@ By decompressing archive, you effectively:
 - copy `dnsmasq-surrogate.control` to `/opt/lib/ipkg/info/`,
 - copy `dnsmasq-surrogate.rc` to `/opt/etc/init.d/S50dnsmasq-surrogate`.
 - give execute permissions to the rc file
-    (`chmod a+x /opt/etc/init.d/S50dnsmasq-surrogate`)
+  (`chmod a+x /opt/etc/init.d/S50dnsmasq-surrogate`)
 
 ### Giving hosts names
 

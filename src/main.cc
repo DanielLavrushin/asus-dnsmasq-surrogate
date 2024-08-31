@@ -111,13 +111,13 @@ int removeSubstitute() {
 
   asus::ScopedServiceShutdown dnsmasq("dnsmasq");
 
-  auto res = umount2(kOriginalName, MNT_FORCE);
+  auto res = umount2(kOriginalName, MNT_DETACH);
   if (res) {
     std::clog << "Could not uninstall " << kOriginalName << ": "
               << strerror(errno) << '\n';
   }
 
-  res = umount2(kTemporaryName, MNT_FORCE);
+  res = umount2(kTemporaryName, MNT_DETACH);
   if (res) {
     std::clog << "Could not install " << kTemporaryName << ": "
               << strerror(errno) << '\n';

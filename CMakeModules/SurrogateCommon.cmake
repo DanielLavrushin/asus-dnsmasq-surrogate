@@ -3,9 +3,7 @@
 # This is not perfect, and in fact we should use the actual shared object from
 # the target device, but our requirements are also rather slim, so may as well
 # simulate that we have one.
-add_library(nvram SHARED
-    src/mock/nvram.cc
-)
+add_library(nvram STATIC src/mock/nvram.cc)
 
 include(GitRepoState)
 
