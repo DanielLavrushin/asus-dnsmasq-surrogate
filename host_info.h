@@ -26,7 +26,6 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <variant>
 
 namespace asus {
 
@@ -38,39 +37,40 @@ enum class HostInfoState {
 
   // MAC address is not valid / could not be processed.
   InvalidMacAddress,
+
+  // Name assigned to host is not valid for DNS.
+  UnacceptableName,
 };
+
 
 // HostInfo contains configuration details for a single host.
 class HostInfo {
  public:
-  static std::variant<HostInfo, HostInfoState> WithIpAddr(std::string mac,
-                                                          std::string ip) {
-    HostInfo res;
-    res.mac_addr_ = std::move(mac);
-    res.ip_addr_ = std::move(ip);
-    res.Validate();
-    if (res.state_ != HostInfoState::OK) return res.state_;
-    return res;
+  HostInfo(
+      std::string mac,
+      std::optional<std::string> name,
+           std::optional<std::string> ip)
+      : mac_addr_(std::move(mac)),
+        name_(std::move(name)),
+        ip_addr_(std::move(ip)) {
+    HostMacAddressToId();
+    if (state_ == HostInfoState::OK) {
+      Validate();
+    }
   }
 
-  static std::variant<HostInfo, HostInfoState> WithName(std::string mac,
-                                                        std::string name) {
-    HostInfo res;
-    res.name_ = std::move(name);
-    res.mac_addr_ = std::move(mac);
-    res.Validate();
-    if (res.state_ != HostInfoState::OK) return res.state_;
-    return res;
-  }
+  // Default move constructors
+  HostInfo(HostInfo&&) = default;
+  HostInfo& operator= (HostInfo&&) = default;
+  // Disallow copying of this object.
+  HostInfo(const HostInfo&) = delete;
+  HostInfo& operator= (const HostInfo&) = delete;
 
   // Accessors.
   uint64_t Id() const { return id_; }
   const std::string& MacAddr() const { return mac_addr_; }
   const std::optional<std::string>& Name() const { return name_; }
   const std::optional<std::string>& IpAddr() const { return ip_addr_; }
-
-  // Checks whether name can be used as a valid hostname.
-  bool HasValidHostName() const;
 
   // MergeFrom collects additional details from a different instance of HostInfo
   // that is built for the same host.
@@ -93,7 +93,7 @@ class HostInfo {
  private:
   // Convert MAC address to an ID.
   // This call will erase any previously existing state_ settings.
-  void BuildIdFromMacAddress();
+  void HostMacAddressToId();
 
   // Validate host name applicability for DNS.
   // This call will erase any previously existing state_ settings.

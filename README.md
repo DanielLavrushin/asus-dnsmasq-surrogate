@@ -1,5 +1,4 @@
 # Asus DNSMasq surrogate
-
 ## About
 
 Purpose of this tool is to provide a bit more functionality for Asus routers
@@ -11,79 +10,48 @@ software etc. As long as your Asus can install its own utilities (eg. time
 machine or download master), you're good to go.
 
 ## Building
-
 ### Requirements
 
-- install dependencies
+To build this for your router, I recommend installing a debian chroot on
+your router and using up-to-date tools. One other option is to use
+cross-platform toolchain on your PC.
 
-  ```bash
-  sudo apt install build-essential cmake cmake-curses-gui gcc-arm-linux-gnueabi g++-arm-linux-gnueabi gcc-9-arm-linux-gnueabi g++-9-arm-linux-gnueabi
-  ```
+Minimum requirements for building the tool are:
 
-Simply invoke `cmake .` followed by `ccmake .`. `BUILD_DIST` controls whether
-the target version (for device) will be built; when OFF, build defaults to
-(host-side) unit testing.
+  - gcc version 7.2.0,
+  - original or stub version of `libnvram.so`
+
+if you chose to build with original `/lib/libnvram.so`, you will also need
+to copy `/lib/libwlcsm.so` and `/usr/lib/libshared.so`.
 
 ### Compiling
 
-- use `make all install dist` to build target package (assumes `cmake -DBUILD_DIST=ON .`).
-- use `make all test` to build and run tests (assumes `BUILD_DIST=off`).
+This is the only part that requires a bit of an effort. Supplied build files
+work well with modern build tools for linux. Assuming your tools meet
+requirements, a single `make` execution should suffice
 
 ## Usage
-
-### Before installing
+### Installation
 
 Before the tool can be deployed to your router, pen drive must be configured.
 It is easiest done the router itself:
 
-- plug in pen drive to your router's USB port,
-- navigate to `USB Applications`,
-- install `Download Master`.
+  - plug in pen drive to your router's USB port,
+  - navigate to `USB Applications`,
+  - install `Download Master`.
 
 The last step will initialize SD card for you.
+Once this step is done, copy:
 
-### Basic installation
+  - `dnsmasq-surrogate` to `/opt/bin`,
+  - `dnsmasq-surrogate.control` to `/opt/lib/ipkg/info/`,
+  - `dnsmasq-surrogate.rc` to `/opt/etc/init.d/S50dnsmasq-surrogate`.
+  - give execute permissions to the rc file
+    (`chmod a+x /opt/etc/init.d/S50dnsmasq-surrogate`)
+  - restart your router.
 
-- Open
-  [`Releases`](https://github.com/tomasz-wiszkowski/asus-dnsmasq/releases)
-  tab here on Github and download archive for your router,
-- copy archive to your router (eg. using pendrive or `scp`)
-- extract contents of this archive on your router to /opt folder:
-
-  ```bash
-  cd /opt
-  tar -zxf /path/to/dnsmasq-surrogate-*.tgz .
-  ```
-
-- restart your router.
-
-### Expert installation / building from sources
-
-- install armbian, debian or package manager on your router. Your package
-  manager must provide decently modern gcc or clang and basic build tools.
-- execute `make dist` in the source folder. This will produce all artifacts
-  and package them to a tgz file.
-- decompress the package to an `/opt` folder:
-
-  ```bash
-  cd /opt
-  tar -zxf /path/to/dnsmasq-surrogate-*.tgz .
-  ```
-
-  - activate surrogate and restart dnsmasq:
-
-    ```bash
-    dnsmasq-surrogate install
-    service restart_dnsmasq
-    ```
-
-By decompressing archive, you effectively:
-
-- copy `dnsmasq-surrogate` to `/opt/bin`,
-- copy `dnsmasq-surrogate.control` to `/opt/lib/ipkg/info/`,
-- copy `dnsmasq-surrogate.rc` to `/opt/etc/init.d/S50dnsmasq-surrogate`.
-- give execute permissions to the rc file
-  (`chmod a+x /opt/etc/init.d/S50dnsmasq-surrogate`)
+Or execute `make dist` and extract the `dnsmasq-surrogate.tgz` to `/opt` folder
+on your router.
 
 ### Giving hosts names
 

@@ -1,13 +1,3 @@
 .ycm_extra_conf.py
 version.h
 
-*.o
-*.so
-
-.*.sw?
-*.tar
-*.gz
-*.tgz
-.dnsmasq_config.cc.swp .Makefile.swp
-
-dnsmasq-surrogate

@@ -46,7 +46,7 @@ class DnsMasqConfig {
   // Load dnsmasq configuration file from specified source.
   // Configuration will be processed and storred internally.
   // Original configuration options order is ignored.
-  void Load(std::istream& cfg);
+  void Load(const std::string& source);
 
   // Rewrite hosts found in previously loaded configuration file to include
   // information found in the supplied hosts map.
@@ -62,7 +62,7 @@ class DnsMasqConfig {
   // Save dnsmasq configuration to a specified file.
   // Configuration options are saved in a modified order; original order of
   // configuration options will not be preserved.
-  void Save(std::ostream& cfg);
+  void Save(const std::string& dest);
 
  private:
   using ValueType = std::variant<nullptr_t, std::string, HostInfo>;

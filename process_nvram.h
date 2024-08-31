@@ -21,7 +21,35 @@
 //
 #pragma once
 
+#include <string>
 #include <string_view>
+#include <variant>
 
-constexpr std::string_view kVersionString =
-    "Version ${PROJECT_VERSION}-${GIT_SHA}${GIT_STATE}";
+#include "host_info.h"
+
+namespace asus {
+// NVRAM string parsing result.
+enum class ParseResult {
+  // No error.
+  OK,
+
+  // Missing start marker ('<')
+  InvalidStartMarker,
+
+  // Missing end marker ('>>')
+  InvalidEndMarker,
+
+  // Missing field marker ('>')
+  MissingFieldEndMarker,
+};
+
+// Convert Asus nvram custom_clientlist to a HostInfoMap.
+HostInfoMap ProcessCustomClientList(std::string_view input);
+
+// Extract client information from client string.
+std::variant<HostInfo, ParseResult> ExtractClientInfo(std::string_view client);
+
+// Logging.
+std::ostream& operator << (std::ostream& out, ParseResult e);
+
+}  // namespace asus

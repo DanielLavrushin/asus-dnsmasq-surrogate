@@ -20,33 +20,30 @@
 // SOFTWARE.
 //
 
+#include <experimental/filesystem>
+#include <fstream>
+#include <iostream>
+
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
 #include <unistd.h>
 
-#include <experimental/filesystem>
-#include <fstream>
-#include <iostream>
-
 #include "dnsmasq_config.h"
-#include "mock/nvram.h"
+#include "nvram.h"
 #include "process_nvram.h"
 #include "scoped_service_shutdown.h"
 #include "version.h"
 
 namespace fs = std::experimental::filesystem;
 
-namespace {
 // Keep the temporary file name 'dnsmasq' without any further extensions.
 // Asus' RC expects commands to have very specific names when it confirms
 // their running state or when it shuts them down (~"pkill").
-constexpr const char kTemporaryName[] = "/tmp/dnsmasq";
-constexpr const char kOriginalName[] = "/usr/sbin/dnsmasq";
-constexpr const char kDnsMasqHostsPath[] = "/jffs/dnsmasq-surrogate/hosts";
-constexpr const char kDnsMasqConfigPath[] = "/etc/dnsmasq.conf";
-}  // namespace
+constexpr char kTemporaryName[] = "/tmp/dnsmasq";
+constexpr char kOriginalName[] = "/usr/sbin/dnsmasq";
+constexpr char kDnsMasqHostsPath[] = "/jffs/dnsmasq-surrogate/hosts";
 
 // Get path to this executable
 std::string getSelfPath() {
@@ -111,13 +108,13 @@ int removeSubstitute() {
 
   asus::ScopedServiceShutdown dnsmasq("dnsmasq");
 
-  auto res = umount2(kOriginalName, MNT_DETACH);
+  auto res = umount2(kOriginalName, MNT_FORCE);
   if (res) {
     std::clog << "Could not uninstall " << kOriginalName << ": "
               << strerror(errno) << '\n';
   }
 
-  res = umount2(kTemporaryName, MNT_DETACH);
+  res = umount2(kTemporaryName, MNT_FORCE);
   if (res) {
     std::clog << "Could not install " << kTemporaryName << ": "
               << strerror(errno) << '\n';
@@ -129,25 +126,21 @@ int removeSubstitute() {
 // Print usage to console.
 int help(char* const cmd) {
   std::clog << "Usage:\n";
-  std::clog << "\t" << cmd
-            << " install      -- install surrogate and restart service.\n";
-  std::clog << "\t" << cmd
-            << " remove       -- remove surrogate and restart service.\n";
-  std::clog << "\t" << cmd
-            << " showconfig   -- dump resulting config on screen.\n";
-  std::clog << "\t" << cmd
-            << " version      -- show software version and exit.\n";
+  std::clog << "\t" << cmd << " install -- install surrogate and "
+                              "restart service\n";
+  std::clog << "\t" << cmd << " remove  -- remove surrogate and "
+                              "restart service\n";
+  std::clog << "\t" << cmd << " query   -- print information about system\n";
   return 1;
 }
 
-asus::DnsMasqConfig buildConfig() {
+// Rebuild and save dnsmasq configuration file. Execute this right before
+// jumping to actual dnsmasq to supply hostnames in your system.
+void rebuildConfig() {
   auto clients =
       asus::ProcessCustomClientList(bcm::nvram_get("custom_clientlist"));
   asus::DnsMasqConfig c;
-
-  std::ifstream cfg(kDnsMasqConfigPath);
-  if (cfg.good()) c.Load(cfg);
-
+  c.Load("/etc/dnsmasq.conf");
   c.RewriteHosts(clients);
 
   for (auto&& d : fs::directory_iterator(kDnsMasqHostsPath)) {
@@ -156,32 +149,27 @@ asus::DnsMasqConfig buildConfig() {
     }
   }
 
-  return c;
-}
-
-// Rebuild and save dnsmasq configuration file. Execute this right before
-// jumping to actual dnsmasq to supply hostnames in your system.
-void rebuildConfig() {
-  auto c = buildConfig();
-
-  std::ofstream cfg(kDnsMasqConfigPath);
-  if (!cfg.good()) {
-    std::clog << "Could not save dnsmasq config file " << kDnsMasqConfigPath
-              << '\n';
-    return;
-  }
-
-  c.Save(cfg);
-}
-
-int showConfig() {
-  auto c = buildConfig();
-  c.Save(std::clog);
-  return 0;
+  c.Save("/etc/dnsmasq.conf");
 }
 
 int version() {
-  std::clog << kVersionString << '\n';
+  std::clog << "Version " << kBuildMajor << '.' << kBuildMinor << '.'
+            << kBuildPatch << " built on " << kBuildDay << '.' << kBuildMonth
+            << '.' << kBuildYear << '\n';
+  return 0;
+}
+
+// Rebuild and print out configuration values.
+// TODO: This currently depends on logging invoked by calls used to re-configure
+// dnsmasq.
+//
+// Returns 0 on success.
+int querySystem() {
+  auto clients =
+      asus::ProcessCustomClientList(bcm::nvram_get("custom_clientlist"));
+  asus::DnsMasqConfig c;
+  c.Load("/etc/dnsmasq.conf");
+  c.RewriteHosts(clients);
   return 0;
 }
 
@@ -199,8 +187,8 @@ int main(int argc, char* const argv[]) {
     if (argc == 2) {
       if (argv[1] == "install"sv) return installSubstitute();
       if (argv[1] == "remove"sv) return removeSubstitute();
+      if (argv[1] == "query"sv) return querySystem();
       if (argv[1] == "version"sv) return version();
-      if (argv[1] == "showconfig"sv) return showConfig();
     }
     return help(argv[0]);
   }

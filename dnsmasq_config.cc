@@ -43,17 +43,16 @@ DnsMasqConfig::ValueType DnsMasqConfig::ParseConfigValue(
     // This config already uses host name.
     if (host_end != std::string::npos) return std::string{value};
 
-    auto res = HostInfo::WithIpAddr(std::string(value.substr(0, mac_end)),
-                                    std::string(value.substr(mac_end + 1)));
-
-    if (std::holds_alternative<HostInfo>(res)) {
-      return std::get<HostInfo>(std::move(res));
-    }
+    return HostInfo{std::string(value.substr(0, mac_end)), std::nullopt,
+                    std::string(value.substr(mac_end + 1))};
   }
   return std::string{value};
 }
 
-void DnsMasqConfig::Load(std::istream& cfg) {
+void DnsMasqConfig::Load(const std::string& source) {
+  std::ifstream cfg(source);
+  if (!cfg.good()) return;
+
   std::string line;
   while (std::getline(cfg, line)) {
     std::string_view lview(line);
@@ -77,17 +76,21 @@ void DnsMasqConfig::RewriteHosts(const HostInfoMap& hosts) {
     std::visit(
         [&hosts](auto&& arg) {
           using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<T, nullptr_t>) {
-            std::clog << "set";
-          } else if constexpr (std::is_same_v<T, std::string>) {
-            std::clog << "'" << arg << "'";
-          } else if constexpr (std::is_same_v<T, HostInfo>) {
-            auto other_host = hosts.find(arg.Id());
-            if (other_host != hosts.end()) {
-              arg.MergeFrom(other_host->second);
+          if
+            constexpr(std::is_same_v<T, nullptr_t>) { std::clog << "set"; }
+          else if
+            constexpr(std::is_same_v<T, std::string>) {
+              std::clog << "'" << arg << "'";
             }
-            std::clog << arg;
-          } else {
+          else if
+            constexpr(std::is_same_v<T, HostInfo>) {
+              auto other_host = hosts.find(arg.Id());
+              if (other_host != hosts.end()) {
+                arg.MergeFrom(other_host->second);
+              }
+              std::clog << arg;
+            }
+          else {
             std::clog << "of unknown type '" << typeid(T).name() << "'";
           }
         },
@@ -102,13 +105,17 @@ void DnsMasqConfig::AddHostsFile(const std::string& hosts_file) {
     if (!file.good()) return;
   }
   fs::path hosts_path = fs::current_path();
-  
-  hosts_path /= hosts_file;
-  
+  hosts_path.append(hosts_file);
   options_.emplace("addn-hosts", hosts_path);
 }
 
-void DnsMasqConfig::Save(std::ostream& cfg) {
+void DnsMasqConfig::Save(const std::string& dest) {
+  std::ofstream cfg(dest);
+  if (!cfg.good()) {
+    std::clog << "Could not save dnsmasq config file " << dest << '\n';
+    return;
+  }
+
   cfg << "#\n";
   cfg << "# Config file generated using dnsmasq surrogate\n";
   cfg << "#\n";
@@ -118,15 +125,19 @@ void DnsMasqConfig::Save(std::ostream& cfg) {
     std::visit(
         [&cfg](auto&& arg) {
           using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<T, nullptr_t>) {
-            // ignore.
-          } else if constexpr (std::is_same_v<T, std::string>) {
-            cfg << '=' << arg;
-          } else if constexpr (std::is_same_v<T, HostInfo>) {
-            cfg << '=' << arg.MacAddr();
-            if (arg.HasValidHostName()) cfg << ',' << arg.Name().value();
-            cfg << ',' << arg.IpAddr().value();
-          } else {
+          if
+            constexpr(std::is_same_v<T, nullptr_t>) {
+              // ignore.
+            }
+          else if
+            constexpr(std::is_same_v<T, std::string>) { cfg << '=' << arg; }
+          else if
+            constexpr(std::is_same_v<T, HostInfo>) {
+              cfg << '=' << arg.MacAddr();
+              if (arg.Name()) cfg << ',' << arg.Name().value();
+              cfg << ',' << arg.IpAddr().value();
+            }
+          else {
             // Best effort.
             cfg << arg;
           }
