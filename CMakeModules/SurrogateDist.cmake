@@ -4,9 +4,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(CMAKE_CXX_COMPILER arm-linux-gnueabi-g++-9)
-set(CMAKE_CXX_FLAGS "-static --std=c++17 ${CXX_FLAGS}")
-
 include(SurrogateCommon)
 
 add_executable(${PROJECT_NAME}
@@ -16,10 +13,8 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
     nvram
     surrogate
-    -static-libstdc++
-    -static-libgcc
-    -lstdc++fs
-    -static
+    stdc++.a
+    stdc++fs.a
 )
 
 install(
