@@ -11,10 +11,12 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    nvram
+    /workspace/libs/libnvram.so
+    /workspace/libs/libwlcsm.so
+    /workspace/libs/libshared.so
     surrogate
-    stdc++.a
-    stdc++fs.a
+    stdc++
+    stdc++fs
 )
 
 install(
