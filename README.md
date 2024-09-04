@@ -10,6 +10,10 @@ This tool does not require root-jailing, installation of any other third-party
 software etc. As long as your Asus can install its own utilities (eg. time
 machine or download master), you're good to go.
 
+## Supported Devices:
+
+- [RT-BE88U](https://www.asus.com/networking-iot-servers/wifi-routers/asus-gaming-routers/rt-be88u/)
+
 ## Compiling
 
 - From the router copy the depended libraries:
