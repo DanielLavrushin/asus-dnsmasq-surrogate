@@ -97,15 +97,21 @@ void DnsMasqConfig::RewriteHosts(const HostInfoMap& hosts) {
 }
 
 void DnsMasqConfig::AddHostsFile(const std::string& hosts_file) {
+  // Check if the file exists
   {
     std::ifstream file(hosts_file);
     if (!file.good()) return;
   }
-  fs::path hosts_path = fs::current_path();
-  
-  hosts_path /= hosts_file;
-  
-  options_.emplace("addn-hosts", hosts_path);
+
+  // Normalize the path
+  std::string normalized_path = hosts_file;
+  size_t pos = std::string::npos;
+  while ((pos = normalized_path.find("//")) != std::string::npos) {
+    normalized_path.replace(pos, 2, "/");
+  }
+
+  // Add the normalized path to options
+  options_.emplace("addn-hosts", normalized_path);
 }
 
 void DnsMasqConfig::Save(std::ostream& cfg) {

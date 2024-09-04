@@ -68,36 +68,56 @@ std::string getSelfPath() {
 //
 // Returns 0 on success.
 int installSubstitute() {
+  std::clog << "\033[36mStarting dnsmasq substitute installation...\033[0m\n";
+
   {
+    std::clog << "\033[33mCreating temporary marker file at: " << kTemporaryName
+              << "\033[0m\n";
     std::ofstream marker{kTemporaryName};
     if (!marker.good()) {
-      std::clog << "Could not create temporary file: " << kTemporaryName
-                << "\n";
+      std::clog << "\033[31mError: Could not create temporary file: "
+                << kTemporaryName << "\033[0m\n";
       return 1;
     }
     marker.flush();
     marker.close();
+    std::clog << "\033[32mTemporary marker file created successfully.\033[0m\n";
   }
 
+  std::clog << "\033[33mShutting down dnsmasq service...\033[0m\n";
   asus::ScopedServiceShutdown dnsmasq("dnsmasq");
+  std::clog << "\033[32mdnsmasq service successfully stopped.\033[0m\n";
 
+  std::clog << "\033[33mBinding original dnsmasq (" << kOriginalName
+            << ") to temporary name (" << kTemporaryName << ")...\033[0m\n";
   auto res = mount(kOriginalName, kTemporaryName, nullptr, MS_BIND, nullptr);
   if (res) {
-    std::clog << "Could not install " << kTemporaryName << ": "
-              << strerror(errno) << '\n';
+    std::clog << "\033[31mError: Could not bind " << kOriginalName << " to "
+              << kTemporaryName << ": " << strerror(errno) << "\033[0m\n";
     return 1;
   }
+  std::clog << "\033[32mSuccessfully bound original dnsmasq to temporary "
+               "name.\033[0m\n";
 
   auto self_path = getSelfPath();
+  std::clog << "\033[33mBinding current executable (" << self_path
+            << ") to original dnsmasq (" << kOriginalName << ")...\033[0m\n";
   res = mount(self_path.c_str(), kOriginalName, nullptr, MS_BIND, nullptr);
   if (res) {
-    std::clog << "Could not install " << kOriginalName << ": "
-              << strerror(errno) << '\n';
+    std::clog << "\033[31mError: Could not bind current executable to "
+              << kOriginalName << ": " << strerror(errno) << "\033[0m\n";
     return 1;
   }
+  std::clog << "\033[32mSuccessfully bound current executable to original "
+               "dnsmasq.\033[0m\n";
 
+  std::clog << "\033[33mCreating directory for dnsmasq surrogate hosts at: "
+            << kDnsMasqHostsPath << "\033[0m\n";
   fs::create_directories(kDnsMasqHostsPath);
+  std::clog << "\033[32mDirectory created successfully.\033[0m\n";
 
+  std::clog << "\033[36mdnsmasq substitute installation completed "
+               "successfully.\033[0m\n";
   return 0;
 }
 
@@ -107,22 +127,37 @@ int installSubstitute() {
 //
 // Returns 0 on success.
 int removeSubstitute() {
-  std::clog << "Removing surrogate...\n";
+  std::clog << "\033[36mStarting dnsmasq surrogate removal...\033[0m\n";
 
+  // Shutdown dnsmasq service before uninstallation
+  std::clog << "\033[33mShutting down dnsmasq service...\033[0m\n";
   asus::ScopedServiceShutdown dnsmasq("dnsmasq");
+  std::clog << "\033[32mdnsmasq service successfully stopped.\033[0m\n";
 
+  // Unmount the original dnsmasq from the surrogate
+  std::clog << "\033[33mUnmounting original dnsmasq (" << kOriginalName
+            << ")...\033[0m\n";
   auto res = umount2(kOriginalName, MNT_DETACH);
   if (res) {
-    std::clog << "Could not uninstall " << kOriginalName << ": "
+    std::clog << "\033[31mError: Could not unmount " << kOriginalName << ": "
               << strerror(errno) << '\n';
+  } else {
+    std::clog << "\033[32mSuccessfully unmounted original dnsmasq.\033[0m\n";
   }
 
+  // Unmount the temporary dnsmasq
+  std::clog << "\033[33mUnmounting temporary dnsmasq (" << kTemporaryName
+            << ")...\033[0m\n";
   res = umount2(kTemporaryName, MNT_DETACH);
   if (res) {
-    std::clog << "Could not install " << kTemporaryName << ": "
+    std::clog << "\033[31mError: Could not unmount " << kTemporaryName << ": "
               << strerror(errno) << '\n';
+  } else {
+    std::clog << "\033[32mSuccessfully unmounted temporary dnsmasq.\033[0m\n";
   }
 
+  std::clog << "\033[36mdnsmasq surrogate removal completed "
+               "successfully.\033[0m\n";
   return 0;
 }
 

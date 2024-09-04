@@ -2,7 +2,7 @@
 cmake_minimum_required (VERSION 3.5)
 
 project(dnsmasq-surrogate
-  VERSION 2.0.0
+  VERSION 2.2.0
   LANGUAGES C CXX
 )
 

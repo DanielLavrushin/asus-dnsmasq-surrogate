@@ -3,31 +3,25 @@
 ## About
 
 Purpose of this tool is to provide a bit more functionality for Asus routers
-that either don't have Merlin support (hello, GT-AC5300), or are not supported
-by Merlin any more.
+that either don't have Merlin support (hello, BE-RT88U), or are not yet supported
+by Merlin.
 
 This tool does not require root-jailing, installation of any other third-party
 software etc. As long as your Asus can install its own utilities (eg. time
 machine or download master), you're good to go.
 
-## Building
+## Compiling
 
-### Requirements
-
-- install dependencies
+- From the router copy the depended libraries:
+  - `/lib/libnvram.so`
+  - `/lib/libshared.so`
+  - `/usr/lib/libwlcsm.so`
+- install Docker and build toolchain image
 
   ```bash
-  sudo apt install build-essential cmake cmake-curses-gui gcc-arm-linux-gnueabi g++-arm-linux-gnueabi gcc-9-arm-linux-gnueabi g++-9-arm-linux-gnueabi
+  docker build -t be88u .
+  docker run -it -v /path/to/asus-dnsmasq-surrogate/:/workspace -v /path/to/asus-libs/:/workspace/libs be88u
   ```
-
-Simply invoke `cmake .` followed by `ccmake .`. `BUILD_DIST` controls whether
-the target version (for device) will be built; when OFF, build defaults to
-(host-side) unit testing.
-
-### Compiling
-
-- use `make all install dist` to build target package (assumes `cmake -DBUILD_DIST=ON .`).
-- use `make all test` to build and run tests (assumes `BUILD_DIST=off`).
 
 ## Usage
 
@@ -45,7 +39,7 @@ The last step will initialize SD card for you.
 ### Basic installation
 
 - Open
-  [`Releases`](https://github.com/tomasz-wiszkowski/asus-dnsmasq/releases)
+  [`Releases`](https://github.com/DanielLavrushin/asus-dnsmasq-surrogate/releases)
   tab here on Github and download archive for your router,
 - copy archive to your router (eg. using pendrive or `scp`)
 - extract contents of this archive on your router to /opt folder:
@@ -56,6 +50,21 @@ The last step will initialize SD card for you.
   ```
 
 - restart your router.
+
+- validate the surrogate works:
+  ```bash
+  dnsmasq-surrogate version
+  ```
+- Check the dnsmasq.conf for the changes:
+  ```bash
+  nano /etc/dnsmasq.conf
+  ```
+  You should see something like
+  ```
+  # Config file generated using dnsmasq surrogate
+  #
+  addn-hosts=/jffs/dnsmasq-surrogate/hosts/adblock.hosts
+  ```
 
 ### Expert installation / building from sources
 

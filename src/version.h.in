@@ -23,5 +23,4 @@
 
 #include <string_view>
 
-constexpr std::string_view kVersionString =
-    "Version ${PROJECT_VERSION}-${GIT_SHA}${GIT_STATE}";
+constexpr std::string_view kVersionString = "Version ${PROJECT_VERSION}";
